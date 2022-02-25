@@ -12,7 +12,7 @@ int RedH = 800;
 const int black = 0;
 const int blue = 1;
 const int red = 2;
-const int white = 2;
+const int white = 3;
 
 int color(int sensorRead){
   if(sensorRead <= BlackH){return black;}
@@ -33,6 +33,7 @@ void loop(){
   int sensorLRead = color(analogRead(sensorL));
   int sensorRRead = color(analogRead(sensorR));
   int sensorMRead = color(analogRead(sensorM));
+
   if(sensorLRead == white && sensorRRead == white && sensorMRead == black){
     Serial.println("all good");
   } else if(sensorMRead == black && sensorLRead != white && sensorRRead != white){

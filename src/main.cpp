@@ -24,7 +24,14 @@ const int black = 0;
 const int blue = 1;
 const int red = 2;
 const int white = 3;
-
+/*
+stop
+cw
+ccw
+moving
+goal
+loading
+*/
 byte incoming;
 
 int color(int sensorRead, int blackT){

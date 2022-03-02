@@ -15,7 +15,7 @@ int dirPin2B = 7;
 
 int BlackL = 200;
 int BlackM = 70;
-int BlackR = 200;
+int BlackR = 100;
 
 int speedL = 150;
 int speedR = 150;
@@ -62,47 +62,36 @@ void loop(){
   int sensorRRead = color(analogRead(sensorR), BlackR);
   int sensorMRead = color(analogRead(sensorM), BlackM);
 
-
- if (Serial.available() > 0)
-  {
-  incoming = Serial.read();
-  digitalWrite(dirPin1A, LOW);
-  digitalWrite(dirPin2A, LOW);
-
-  digitalWrite(dirPin1B, LOW);
-  digitalWrite(dirPin2B, LOW);
-  }
-
   Serial.print(sensorLRead);
   Serial.print(sensorMRead);
   Serial.println(sensorRRead);
 
-  // Serial.println(analogRead(sensorR));
+  Serial.println(analogRead(sensorR));
   // Serial.print(analogRead(sensorM));
   // Serial.println(analogRead(sensorR));
   delay(500);
 
-  // if(sensorLRead == white && sensorRRead == white && sensorMRead == black){
-  //   Serial.println("all good");
-  // } else if(sensorLRead != white && sensorRRead != white){
-  //   Serial.println("reached 90deg turn");
-  // } else if(sensorLRead != white && sensorRRead == white){
-  //   Serial.println("steer left"); 
-  //   while(sensorLRead != white && sensorRRead == white){
-  //     digitalWrite(dirPin1A, LOW);
-  //     digitalWrite(dirPin2A, HIGH);
-  //   }
-  //   digitalWrite(dirPin1A, HIGH);
-  //   digitalWrite(dirPin2A, LOW);
-  // } else if(sensorLRead == white && sensorRRead != white){
-  //   Serial.println("steer right"); 
-  //   while(sensorLRead == white && sensorRRead != white){
-  //     digitalWrite(dirPin1B, LOW);
-  //     digitalWrite(dirPin2B, HIGH);
-  //   }
-  //   digitalWrite(dirPin1B, HIGH);
-  //   digitalWrite(dirPin2B, LOW);
-  // } else{
-  //   Serial.println("UNKNOWN STATE"); 
-  // }
+  if(sensorLRead == white && sensorRRead == white && sensorMRead == black){
+    Serial.println("all good");
+  } else if(sensorLRead != white && sensorRRead != white){
+    Serial.println("reached 90deg turn");
+  } else if(sensorLRead != white && sensorRRead == white){
+    Serial.println("steer left"); 
+    while(sensorLRead != white && sensorRRead == white){
+      digitalWrite(dirPin1A, LOW);
+      digitalWrite(dirPin2A, HIGH);
+    }
+    digitalWrite(dirPin1A, HIGH);
+    digitalWrite(dirPin2A, LOW);
+  } else if(sensorLRead == white && sensorRRead != white){
+    Serial.println("steer right"); 
+    while(sensorLRead == white && sensorRRead != white){
+      digitalWrite(dirPin1B, LOW);
+      digitalWrite(dirPin2B, HIGH);
+    }
+    digitalWrite(dirPin1B, HIGH);
+    digitalWrite(dirPin2B, LOW);
+  } else{
+    Serial.println("UNKNOWN STATE"); 
+  }
 }

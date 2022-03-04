@@ -204,15 +204,19 @@ void Robot::_runAdjustTimer(void)
 void Robot::_button1()
 {
     CalibrateBlack();
-    Serial.printf("%d, %d, %d\n", _BlackL, _BlackM, _BlackR);
+    Serial.printf("LINE SENSOR VALS: %d, %d, %d\n", _BlackL, _BlackM, _BlackR);
+    Serial.printf("JUNCTION SENSOR VALS: %d, %d\n", _BlackLJ, _BlackRJ);
 }
 
 void Robot::_button2()
 {
     CalibrateWhite();
-    Serial.printf("%d, %d, %d\n", _WhiteL, _WhiteM, _WhiteR);
+    Serial.printf("LINE SENSOR VALS: %d, %d, %d\n", _WhiteL, _WhiteM, _WhiteR);
+    Serial.printf("JUNCTION SENSOR VALS: %d, %d\n", _WhiteLJ, _WhiteRJ);
     _setThresholds();
-    Serial.printf("%d, %d, %d\n", _ThreshL, _ThreshM, _ThreshR);
+
+    Serial.printf("LINE SENSOR THRESHOLDS%d, %d, %d\n", _ThreshL, _ThreshM, _ThreshR);
+    Serial.printf("LINE SENSOR THRESHOLDS%d, %d\n", _ThreshLJ, _ThreshRJ);
 }
 
 void Robot::_button3()
@@ -230,7 +234,7 @@ void Robot::_button4()
     Stop();
 }
 
-void Robot::GetReadings(void)
+void Robot::GetReadings(void) // line sensor readings
 {
     if ((lVal >= WThreshL))
     {
@@ -259,7 +263,7 @@ void Robot::GetReadings(void)
     }
 }
 
-void Robot::GetStringReadings(void)
+void Robot::GetStringReadings(void) // string line sensor readings
 {
     GetReadings();
 
@@ -297,17 +301,38 @@ void Robot::GetStringReadings(void)
     }
 }
 
-void Robot::GetValues(void)
+void Robot::GetLineValues(void) // prints lines sensor vals followed by junction vals
 {
     Serial.printf("%d, %d, %d\n", lVal, mVal, rVal);
 }
 
-void GetJunctionReadings(void) {
-
+void Robot::GetValues(void) // prints lines sensor vals followed by junction vals
+{
+    Serial.printf("%d, %d, %d, %d, %d\n", lVal, mVal, rVal, lJVal, rJVal);
 }
 
-void GetJunctionValues(void) {
+void Robot::GetJunctionReadings(void) {
+    if ((lJVal >= WThreshLJ))
+    {
+        juncVals |= 2;
+    }
+    if ((rJVal >= WThreshRJ))
+    {
+        juncVals |= 1;
+    }
 
+    if ((lJVal <= BThreshLJ))
+    {
+        juncVals &= 1;
+    }
+    if ((rJVal <= BThreshRJ))
+    {
+        juncVals &= 2;
+    }
+}
+
+void Robot::GetJunctionValues(void) {
+    Serial.printf("%d, %d\n", lJVal, rJVal);
 }
 
 

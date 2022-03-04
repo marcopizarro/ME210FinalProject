@@ -84,6 +84,7 @@ class Robot {
         void GetReadings(void);
         void GetStringReadings(void);
         void GetValues(void);
+        void GetLineValues(void);
         void GetJunctionValues(void);
 
         // servo
@@ -115,7 +116,11 @@ class Robot {
         int mVal;
         int rVal;
 
+        int lJVal;
+        int rJVal;
+
         byte lineVals = 0;
+        byte juncVals = 0;
         bool _adjustToggle = true;
         bool calibrated = false;
 

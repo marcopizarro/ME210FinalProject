@@ -7,6 +7,14 @@
 #define TEST true
 #define DIAGNOSTIC false
 
+Metro turn90Timer = Metro(600);
+Metro shortTimer = Metro(400);
+Metro shorterTimer = Metro(4000);
+
+bool turn90 = false;
+bool shortT = false;
+bool shorterT = false;
+
 typedef enum
 {
     IDLE,
@@ -46,6 +54,7 @@ Controls controls = {
     4, // red
     3, // blue
     2, // orange
+    14, // limit back
 };
 
 Sensors sensors = {
@@ -64,9 +73,10 @@ void checkGlobalEvents(void);
 
 void setup()
 {
+  pinMode(14, INPUT);
 state = IDLE;    
 }
-
+int count = 0;
 void loop()
 {
     if (test)
@@ -95,11 +105,38 @@ void loop()
             robot.MoveForward();
             break;
         case START_OPP:
+          robot.MoveForward();
+          break;
+            // if(robot.TestJunction()){
+            //   robot.Stop();
+            // }
+            // if((uint8_t)skipLine.check()){
+            //   isSkipped = true;
+            // }
+            // if(isSkipped){
+            //   robot.Follow();
+            // } else {
+            //   robot.MoveForward();
+            // }
+        case EXIT_OPP:
+            robot.MoveCW();
+            break;
+        case CROSS_OVER:
+            robot.MoveCCW();
+            break;
+        case PIVOT_T:
             robot.Follow();
             break;
-        case EXIT_OPP:
-            robot.MoveBackward();
-            break;
+        case TO_T:
+          robot.MoveForward();
+          break;
+        case TO_LOAD:
+          robot.Follow();
+          break;
+        case TO_FORK:
+          robot.Stop();
+          break;
+            
     }
 }
 
@@ -109,17 +146,61 @@ void checkGlobalEvents() {
         //Serial.println("CLAIBRATED");
     }
     if (robot.TestLimitSwitch() && state == LOAD) {
-        //Serial.println("HIT SWITCH");
-        state = EXIT_LOAD;
-        robot.calibrated = false;
-    }
-    if (robot.TestJunction() && state == EXIT_LOAD) {
+        // Serial.println("HIT SWITCH");
         state = START_OPP;
-        // timer
+        robot.calibrated = false;
+        robot.RaiseServo();
+        // skipLine.reset();
     }
-    if (robot.TestJunction() && state == START_OPP) { //&& timer reached 
-        state = IDLE;
+    if (robot.TestJunction() && state == START_OPP) {
+      robot.Stop();
+      state = EXIT_OPP;
+      turn90Timer.reset();
+      turn90 = false;
     }
+    if(turn90Timer.check()){
+      turn90 = true;
+    }
+    if(shortTimer.check()){
+      shortT = true;
+    }
+    if(shorterTimer.check()){
+      shorterT = true;
+    }
+    if (state == EXIT_OPP && turn90){
+      state = EXIT_LOAD;
+      turn90Timer.reset();
+      turn90 = false;
+    }
+    if (state == EXIT_LOAD && robot.TestJunction() && turn90){
+      state = TO_T;
+      shortTimer.reset();
+      shortT = false;
+    }
+    if (state == TO_T &&  shortT){
+      state = CROSS_OVER;
+      shortTimer.reset();
+      shortT = false;
+    }
+    if (state == CROSS_OVER && robot.TestJunction() && shortT){
+      state = PIVOT_T;
+      shorterTimer.reset();
+      shorterT = false;
+    }
+    if (state == PIVOT_T && shorterT){
+      state = TO_LOAD;
+    }
+    if (state == TO_LOAD && robot.TestJunction()){
+      state = TO_FORK;
+    }
+
+    // if (robot.TestJunction() && state == EXIT_LOAD) {
+    //     state = START_OPP;
+    //     // timer
+    // }
+    // if (robot.TestJunction() && state == START_OPP) { //&& timer reached 
+    //     state = IDLE;
+    // }
 }
 
 // int sensorL = 22;

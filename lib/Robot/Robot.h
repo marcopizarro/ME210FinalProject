@@ -8,7 +8,7 @@
 #include "Metro.h"
 #include <Servo.h>
 
-#define SPEED 30
+#define SPEED 40
 #define SLOW_SPEED 30
 #define FAST_SPEED 100
 #define MAX_SPEED 255
@@ -47,6 +47,7 @@ struct controls
     byte redLED = 0;
     byte blueLED = 0;
     byte orangeLED = 0;
+    byte backLimitPin = 0;
 };
 typedef struct controls Controls;
 
@@ -88,6 +89,7 @@ class Robot {
 
         // event checking
         bool TestLimitSwitch(void);
+        bool TestBackLimitSwitch(void);
         bool TestJunction(void);
 
         int WThreshL;

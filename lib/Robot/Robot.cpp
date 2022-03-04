@@ -27,6 +27,7 @@ Robot::Robot(vexMotor leftMotor, vexMotor rightMotor, Controls controls, Sensors
     pinMode(_controls.statusBtn, INPUT_PULLUP);
     pinMode(_controls.toggleBtn, INPUT_PULLUP);
     pinMode(_controls.limitPin, INPUT);
+    pinMode(_controls.backLimitPin, INPUT);
 
     SetSpeed(SPEED);
     scooper.attach(servoPin);
@@ -76,6 +77,9 @@ void Robot::runDiagnostic(void)
     digitalWrite(_controls.orangeLED, LOW);
     delay(500);
     while (digitalRead(_controls.limitPin) == HIGH)
+    {
+    }
+    while (digitalRead(_controls.backLimitPin) == LOW)
     {
     }
     digitalWrite(_controls.orangeLED, HIGH);
@@ -299,10 +303,19 @@ bool Robot::TestLimitSwitch(void)
     }
 }
 
+bool Robot::TestBackLimitSwitch(void)
+{
+    if (digitalRead(_controls.backLimitPin) == HIGH) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool Robot::TestJunction(void)
 {
     GetReadings();
-    if (vals == 0) {
+    if (vals == 0 || vals == 1 || vals == 6 || vals == 5) {
         return true;
     } else {
         return false;
@@ -487,66 +500,72 @@ void Robot::Follow(void)
     {
         SetSpeed(SPEED);
         // Serial.println("110");
-        _runAdjustTimer();
-        if (_adjustToggle)
-        {
-            MoveCW();
-        }
-        else
-        {
-            Move();
-        }
+        MoveCW();
+        // _runAdjustTimer();
+        // if (_adjustToggle)
+        // {
+        //     MoveCW();
+        // }
+        // else
+        // {
+        //     Move();
+        // }
     }
 
     else if (vals == 3)
     {
         SetSpeed(SPEED);
         // Serial.println("011");
-        _runAdjustTimer();
-        if (_adjustToggle)
-        {
-            MoveCCW();
-        }
-        else
-        {
-            Move();
-        }
+        MoveCCW();
+        // _runAdjustTimer();
+        // if (_adjustToggle)
+        // {
+        //     MoveCCW();
+        // }
+        // else
+        // {
+        //     Move();
+        // }
     }
 
     else if (vals == 1)
     {
         // Serial.println("001");
         SetSpeed(SPEED);
-        _runAdjustTimer();
-        if (_adjustToggle)
-        {
-            MoveCCW();
-        }
-        else
-        {
-            Move();
-        }
+        Move();
+        // MoveCCW();
+        // _runAdjustTimer();
+        // if (_adjustToggle)
+        // {
+        //     MoveCCW();
+        // }
+        // else
+        // {
+        //     Move();
+        // }
     }
     else if (vals == 4)
     {
         // Serial.println("100");
         SetSpeed(SPEED);
-        _runAdjustTimer();
-        if (_adjustToggle)
-        {
-            MoveCW();
-        }
-        else
-        {
-            Move();
-        }
+        // MoveCW();
+        Move();
+        // _runAdjustTimer();
+        // if (_adjustToggle)
+        // {
+        //     MoveCW();
+        // }
+        // else
+        // {
+        //     Move();
+        // }
     }
     else if (vals == 2)
     {
-        SetSpeed(MAX_SPEED);
+        // SetSpeed(MAX_SPEED);
         Serial.println("JUNCTION");
         // Serial.println("010");
-        Stop();
+        // Stop();
     }
     else if (vals == 5)
     {
@@ -558,8 +577,8 @@ void Robot::Follow(void)
     {
         // Serial.println("000");
         Serial.println("LINE");
-        SetSpeed(MAX_SPEED);
-        Stop();
+        // SetSpeed(MAX_SPEED);
+        // Stop();
     }
 }
 

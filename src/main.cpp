@@ -8,9 +8,9 @@
 #define DIAGNOSTIC false
 
 Metro passLineTimer = Metro(800);
-Metro passLineTimer2 = Metro(600);
+Metro passLineTimer2 = Metro(500);
 Metro rotateTimer = Metro(60);
-Metro fullturn = Metro(1000);
+Metro fullturn = Metro(2000);
 
 
 bool turn90 = false;
@@ -92,6 +92,7 @@ void setup()
   passLineTimer.reset();
   passLineTimer2.reset();
   fullturn.reset();
+  // robot.RaiseServo();
 }
 int count = 0;
 void loop()
@@ -183,14 +184,14 @@ void loop()
     break;
   case TURN_AROUND:
   // robot.RaiseServo();
-    robot.SetSpeed(50);
-    robot.MoveCW();
+    // robot.SetSpeed(50);
+    robot.MoveCCW();
     break;
   case BACKINTOIT:
     robot.MoveBackward();
     break;
   case GOALIL:
-    robot.MoveForward();
+    robot.Follow();
     break;
   }
 }
@@ -254,15 +255,16 @@ void checkGlobalEvents()
   }
   if(state == GOALIL && (uint8_t)passLineTimer2.check()){
     state = TURN_AROUND;
-    fullturn.reset();
+    passLineTimer2.reset();
+    robot.Stop();
   }
-    if(state == TURN_AROUND && (robot.WThreshM > robot.BThreshM))
+    if(state == TURN_AROUND && (robot.WThreshM > robot.BThreshM) && (uint8_t)passLineTimer2.check())
   {
     state = BACKINTOIT;
   }
   // if(state == TURN_AROUND && (uint8_t)fullturn.check()) //&& (robot.WThreshM > robot.BThreshM)
   // {
-  //   state = BACKINTOIT;
+  //   state = NADA;
   // }
 
 

@@ -6,10 +6,14 @@
 
 #include "Arduino.h"
 #include "Metro.h"
+#include <Servo.h>
 
-#define SPEED 40
+#define SPEED 30
 #define SLOW_SPEED 30
 #define FAST_SPEED 100
+#define MAX_SPEED 255
+#define LOWER_ANGLE 133
+#define RAISE_ANGLE 220
 
 
 typedef enum
@@ -48,12 +52,13 @@ typedef struct controls Controls;
 
 class Robot {
     public:
-        Robot(vexMotor leftMotor, vexMotor rightMotor, Controls controls, Sensors sensors);
+        Robot(vexMotor leftMotor, vexMotor rightMotor, Controls controls, Sensors sensors, const byte servoPin);
         void run(void);
         // one time things
         void runDiagnostic(void);
         void CalibrateBlack(void);
         void CalibrateWhite(void);
+        void Calibrate(void);
 
         // individual motor actions
         void MoveMotorForward(Motor_t motor);
@@ -76,6 +81,15 @@ class Robot {
         void GetStringReadings(void);
         void GetValues(void);
 
+        // servo
+        Servo scooper;
+        void LowerServo(void);
+        void RaiseServo(void);
+
+        // event checking
+        bool TestLimitSwitch(void);
+        bool TestJunction(void);
+
         int WThreshL;
         int WThreshM;
         int WThreshR;
@@ -89,6 +103,8 @@ class Robot {
         int rVal;
 
         byte vals = 0;
+        bool _adjustToggle = true;
+        bool calibrated = false;
 
         // To-Do
         // red-blue
@@ -105,7 +121,8 @@ class Robot {
         vexMotor _rightMotor;
         vexMotor _leftMotor;
 
-        Metro _adjustTimer = Metro(200);
+        Metro _adjustTimer = Metro(300);
+        Metro _moveTimer = Metro(100);
 
         int _BlackL = 100;
         int _BlackM = 100;
@@ -128,6 +145,7 @@ class Robot {
         
 
         void _setThresholds(void);
+        void _runAdjustTimer(void);
         void _button1(void);
         void _button2(void);
         void _button3(void);
@@ -137,6 +155,7 @@ class Robot {
         bool _adjusted = false;
         bool _movedAway = false;
         bool _adjusting =  false;
+        bool _timerSet = false;
         bool _diag = false;
 };
 

@@ -1,8 +1,9 @@
 #include "Arduino.h"
 #include "Robot.h"
 #include <Metro.h>
+#include <Servo.h>
 
-Robot::Robot(vexMotor leftMotor, vexMotor rightMotor, Controls controls, Sensors sensors)
+Robot::Robot(vexMotor leftMotor, vexMotor rightMotor, Controls controls, Sensors sensors, const byte servoPin)
 {
     _leftMotor = leftMotor;
     _rightMotor = rightMotor;
@@ -25,8 +26,11 @@ Robot::Robot(vexMotor leftMotor, vexMotor rightMotor, Controls controls, Sensors
 
     pinMode(_controls.statusBtn, INPUT_PULLUP);
     pinMode(_controls.toggleBtn, INPUT_PULLUP);
+    pinMode(_controls.limitPin, INPUT);
 
     SetSpeed(SPEED);
+    scooper.attach(servoPin);
+    LowerServo();
 
     _adjustTimer.reset();
 }
@@ -71,7 +75,11 @@ void Robot::runDiagnostic(void)
     delay(500);
     digitalWrite(_controls.orangeLED, LOW);
     delay(500);
-
+    while (digitalRead(_controls.limitPin) == HIGH)
+    {
+    }
+    digitalWrite(_controls.orangeLED, HIGH);
+    delay(1000);
     MoveMotorForward(LEFT);
     delay(1000);
     MoveMotorBackward(LEFT);
@@ -96,6 +104,11 @@ void Robot::runDiagnostic(void)
     delay(1000);
     Stop();
     delay(1000);
+
+    RaiseServo();
+    delay(500);
+    LowerServo();
+    delay(500);
 }
 
 void Robot::CalibrateBlack(void)
@@ -128,6 +141,42 @@ void Robot::_setThresholds(void)
     BThreshL = (_BlackL + _ThreshL) / 2;
     BThreshM = (_BlackM + _ThreshM) / 2;
     BThreshR = (_BlackR + _ThreshR) / 2;
+}
+
+void Robot::_runAdjustTimer(void)
+{
+    if (_adjustToggle)
+    {
+        if (!_timerSet)
+        {
+            _adjustTimer.reset();
+            _timerSet = true;
+        }
+        else
+        {
+            if ((uint8_t)_adjustTimer.check())
+            {
+                _timerSet = false;
+                _adjustToggle = false;
+            }
+        }
+    }
+    else
+    {
+        if (!_timerSet)
+        {
+            _moveTimer.reset();
+            _timerSet = true;
+        }
+        else
+        {
+            if ((uint8_t)_moveTimer.check())
+            {
+                _timerSet = false;
+                _adjustToggle = true;
+            }
+        }
+    }
 }
 
 void Robot::_button1()
@@ -231,6 +280,35 @@ void Robot::GetValues(void)
     Serial.printf("%d, %d, %d\n", lVal, mVal, rVal);
 }
 
+void Robot::LowerServo(void)
+{
+    scooper.write(LOWER_ANGLE);
+}
+
+void Robot::RaiseServo(void)
+{
+    scooper.write(RAISE_ANGLE);
+}
+
+bool Robot::TestLimitSwitch(void)
+{
+    if (digitalRead(_controls.limitPin) == LOW) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool Robot::TestJunction(void)
+{
+    GetReadings();
+    if (vals == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void Robot::MoveMotorForward(Motor_t motor)
 {
     if (motor == LEFT)
@@ -306,16 +384,16 @@ void Robot::Stop(void)
     StopMotor(RIGHT);
 }
 
-void Robot::MoveCW(void)
+void Robot::MoveCCW(void)
 {
-    Serial.println("CW");
+    Serial.println("CCW");
     MoveMotorForward(LEFT);
     MoveMotorBackward(RIGHT);
 }
 
-void Robot::MoveCCW(void)
+void Robot::MoveCW(void)
 {
-    Serial.println("CCW");
+    Serial.println("CW");
     MoveMotorBackward(LEFT);
     MoveMotorForward(RIGHT);
 }
@@ -355,7 +433,41 @@ void Robot::Start(void)
     if (_move)
     {
         // GetReadings();
+
         Follow();
+    }
+}
+
+void Robot::Calibrate(void)
+{
+    if (digitalRead(_controls.statusBtn) == LOW)
+    {
+        if (_calib == 0)
+        {
+            _button1();
+            _calib++;
+        }
+        else if (_calib == 1)
+        {
+            _button2();
+            _calib++;
+        }
+        else if (_calib == 2)
+        {
+            _button3();
+            _calib++;
+        }
+        else
+        {
+            _button4();
+            _calib = 0;
+            calibrated = false;
+        }
+        delay(500);
+    }
+    if (_move)
+    {
+        calibrated = true;
     }
 }
 
@@ -365,6 +477,7 @@ void Robot::Follow(void)
 
     if (vals == 7)
     {
+        Serial.println("NO MAN'S LAND");
         // Serial.println("111");
         SetSpeed(SPEED);
         Move();
@@ -372,99 +485,65 @@ void Robot::Follow(void)
     }
     else if (vals == 6)
     {
-        Serial.println("JUNCTION");
+        SetSpeed(SPEED);
         // Serial.println("110");
-        if (!_adjusted && !_adjusting && !_movedAway)
+        _runAdjustTimer();
+        if (_adjustToggle)
         {
-            _adjustTimer.reset();
-            _adjusting = true;
-        }
-        else if (!_adjusted && _adjusting && !_movedAway)
-        {
-            SetMotorSpeed(RIGHT, SLOW_SPEED);
-            SetMotorSpeed(LEFT, FAST_SPEED);
             MoveCW();
-            if ((uint8_t)_adjustTimer.check())
-            {
-                _adjusted = true;
-                _adjusting = false;
-                _adjustTimer.reset();
-            }
-        }
-        else if (_adjusted && !_adjusting && !_movedAway)
-        {
-            SetSpeed(SLOW_SPEED);
-            Move();
-            if ((uint8_t)_adjustTimer.check())
-            {
-                _adjusted = false;
-                _adjusting = false;
-                _movedAway = true;
-            }
         }
         else
         {
-            _movedAway = false; // dumb ik
+            Move();
         }
-        // MoveCW();
     }
 
     else if (vals == 3)
     {
-        
-        Serial.println("JUNCTION");
+        SetSpeed(SPEED);
         // Serial.println("011");
-        if (!_adjusted && !_adjusting && !_movedAway)
+        _runAdjustTimer();
+        if (_adjustToggle)
         {
-            _adjustTimer.reset();
-            _adjusting = true;
-        }
-        else if (!_adjusted && _adjusting && !_movedAway)
-        {
-            SetMotorSpeed(RIGHT, FAST_SPEED);
-            SetMotorSpeed(LEFT, SLOW_SPEED);
             MoveCCW();
-            if ((uint8_t)_adjustTimer.check())
-            {
-                _adjusted = true;
-                _adjusting = false;
-                _adjustTimer.reset();
-            }
-        }
-        else if (_adjusted && !_adjusting && !_movedAway)
-        {   
-            SetSpeed(SLOW_SPEED);
-            Move();
-            if ((uint8_t)_adjustTimer.check())
-            {
-                _adjusted = false;
-                _adjusting = false;
-                _movedAway = true;
-            }
         }
         else
         {
-            _movedAway = false; // dumb ik
+            Move();
         }
-
-        // MoveCCW();
     }
 
     else if (vals == 1)
     {
         // Serial.println("001");
         SetSpeed(SPEED);
-        Move();
+        _runAdjustTimer();
+        if (_adjustToggle)
+        {
+            MoveCCW();
+        }
+        else
+        {
+            Move();
+        }
     }
     else if (vals == 4)
     {
         // Serial.println("100");
         SetSpeed(SPEED);
-        Move();
+        _runAdjustTimer();
+        if (_adjustToggle)
+        {
+            MoveCW();
+        }
+        else
+        {
+            Move();
+        }
     }
     else if (vals == 2)
     {
-        SetSpeed(10);
+        SetSpeed(MAX_SPEED);
         Serial.println("JUNCTION");
         // Serial.println("010");
         Stop();
@@ -479,7 +558,7 @@ void Robot::Follow(void)
     {
         // Serial.println("000");
         Serial.println("LINE");
-        SetSpeed(10);
+        SetSpeed(MAX_SPEED);
         Stop();
     }
 }

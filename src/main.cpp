@@ -7,22 +7,42 @@
 #define TEST true
 #define DIAGNOSTIC false
 
+typedef enum
+{
+    IDLE,
+    LOAD,
+    EXIT_LOAD,
+    START_OPP,
+    EXIT_OPP,
+    CROSS_OVER,
+    TO_UNLOAD,
+    UNLOAD,
+    EXIT_UNLOAD,
+    TO_FORK,
+    PIVOT_FORK,
+    TO_T,
+    PIVOT_T,
+    TO_LOAD,
+} States_t;
+
+States_t state;
+
 VexMotor leftMotor = {
     16, // enable
-    17, // dir1
-    18,
+    18, // dir1
+    17,
 };
 
 VexMotor rightMotor = {
     9, // enable
-    8, // dir1
-    7,
+    7, // dir1
+    8,
 };
 
 Controls controls = {
     5, // status
     6, // toggle
-    0, // limit for now
+    15, // limit for now
     4, // red
     3, // blue
     2, // orange
@@ -30,30 +50,75 @@ Controls controls = {
 
 Sensors sensors = {
     22, // left
-    23, // middle
-    21, // right
+    21, // middle
+    23, // right
 };
+
+const byte servoPin = 10;
 
 const bool test = false;
 
-Robot robot = Robot(leftMotor, rightMotor, controls, sensors);
+Robot robot = Robot(leftMotor, rightMotor, controls, sensors, servoPin);
+
+void checkGlobalEvents(void);
 
 void setup()
 {
+state = IDLE;    
 }
 
 void loop()
 {
-    robot.run();
     if (test)
     {
         robot.runDiagnostic();
     }
     else
     {
-        robot.Start();
+        robot.run();
+        // robot.Start();
+        // Serial.println(robot._adjustToggle);
         // robot.GetValues();
-        // robot.GetReadings();
+        // robot.GetStringReadings();
+    }
+
+    Serial.println(state);
+    checkGlobalEvents();
+    switch(state) {
+        case IDLE:
+            robot.Calibrate();
+            break;
+        case LOAD:
+            robot.MoveBackward();
+            break;
+        case EXIT_LOAD:
+            robot.MoveForward();
+            break;
+        case START_OPP:
+            robot.Follow();
+            break;
+        case EXIT_OPP:
+            robot.MoveBackward();
+            break;
+    }
+}
+
+void checkGlobalEvents() {
+    if (robot.calibrated && state == IDLE) {
+        state = LOAD;
+        //Serial.println("CLAIBRATED");
+    }
+    if (robot.TestLimitSwitch() && state == LOAD) {
+        //Serial.println("HIT SWITCH");
+        state = EXIT_LOAD;
+        robot.calibrated = false;
+    }
+    if (robot.TestJunction() && state == EXIT_LOAD) {
+        state = START_OPP;
+        // timer
+    }
+    if (robot.TestJunction() && state == START_OPP) { //&& timer reached 
+        state = IDLE;
     }
 }
 

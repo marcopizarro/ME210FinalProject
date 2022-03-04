@@ -158,14 +158,14 @@ void Robot::_setThresholds(void)
     BThreshM = (_BlackM + _ThreshM) / 2;
     BThreshR = (_BlackR + _ThreshR) / 2;
 
-    _ThreshLJ = (_BlackL + _WhiteL) / 2;
-    _ThreshRJ = (_BlackR + _WhiteR) / 2;
+    _ThreshLJ = (_BlackLJ + _WhiteLJ) / 2;
+    _ThreshRJ = (_BlackRJ + _WhiteRJ) / 2;
 
-    WThreshLJ = (_WhiteL + _ThreshL) / 2;
-    WThreshRJ = (_WhiteR + _ThreshR) / 2;
+    WThreshLJ = (_WhiteLJ + _ThreshLJ) / 2;
+    WThreshRJ = (_WhiteRJ + _ThreshRJ) / 2;
 
-    BThreshLJ = (_BlackL + _ThreshL) / 2;
-    BThreshRJ = (_BlackR + _ThreshR) / 2;
+    BThreshLJ = (_BlackLJ + _ThreshLJ) / 2;
+    BThreshRJ = (_BlackRJ + _ThreshRJ) / 2;
 }
 
 void Robot::_runAdjustTimer(void)
@@ -304,6 +304,28 @@ void Robot::GetStringReadings(void) // string line sensor readings
     }
 }
 
+void Robot::GetStringJReadings(void) // string line sensor readings
+{
+    GetReadings();
+
+    if (juncVals == 3)
+    {
+        Serial.println("011");
+    }
+    else if (juncVals == 2)
+    {
+        Serial.println("010");
+    }
+    else if (juncVals == 1)
+    {
+        Serial.println("001");
+    }
+    else
+    {
+        Serial.println("000");
+    }
+}
+
 void Robot::GetLineValues(void) // prints lines sensor vals followed by junction vals
 {
     Serial.printf("%d, %d, %d\n", lVal, mVal, rVal);
@@ -317,20 +339,20 @@ void Robot::GetValues(void) // prints lines sensor vals followed by junction val
 void Robot::GetJunctionReadings(void) {
     if ((lJVal >= WThreshLJ))
     {
-        juncVals |= 2;
+        juncVals |= 2; // 10
     }
     if ((rJVal >= WThreshRJ))
     {
-        juncVals |= 1;
+        juncVals |= 1; // 01
     }
 
     if ((lJVal <= BThreshLJ))
     {
-        juncVals &= 0;
+        juncVals &= 1; //01
     }
     if ((rJVal <= BThreshRJ))
     {
-        juncVals &= 1;
+        juncVals &= 2; // 10
     }
 }
 
@@ -521,16 +543,10 @@ void Robot::Calibrate(void)
             _button2();
             _calib++;
         }
-        else if (_calib == 2)
-        {
-            _button3();
-            _calib++;
-        }
         else
         {
-            _button4();
+            _button3();
             _calib = 0;
-            calibrated = false;
         }
         delay(500);
     }
@@ -556,7 +572,7 @@ void Robot::Follow(void)
     {
         SetSpeed(SPEED);
         // Serial.println("110");
-        MoveCW();
+        MoveCCW();
         // _runAdjustTimer();
         // if (_adjustToggle)
         // {
@@ -572,7 +588,7 @@ void Robot::Follow(void)
     {
         SetSpeed(SPEED);
         // Serial.println("011");
-        MoveCCW();
+        MoveCW();
         // _runAdjustTimer();
         // if (_adjustToggle)
         // {

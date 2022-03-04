@@ -83,6 +83,7 @@ class Robot {
         void GetJunctionReadings(void);
         void GetReadings(void);
         void GetStringReadings(void);
+        void GetStringJReadings(void);
         void GetValues(void);
         void GetLineValues(void);
         void GetJunctionValues(void);

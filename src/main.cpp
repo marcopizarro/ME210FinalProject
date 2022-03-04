@@ -9,6 +9,7 @@
 
 
 Metro passLineTimer = Metro(1000);
+Metro rotateTimer = Metro(2000);
 
 bool turn90 = false;
 bool shortT = false;
@@ -60,16 +61,16 @@ Controls controls = {
 };
 
 Sensors sensors = {
-    22, // left
+    19, // left
     21, // middle
-    23, // right
-    0,  // junction left
-    0,  // junction right
+    20, // right
+    22,  // junction left
+    23,  // junction right
 };
 
 const byte servoPin = 10;
 
-const bool test = false;
+bool test = true;
 
 Robot robot = Robot(leftMotor, rightMotor, controls, sensors, servoPin);
 
@@ -83,9 +84,12 @@ void setup()
 int count = 0;
 void loop()
 {
-  if (test)
+  robot.run();
+  if (!robot.calibrated)
   {
-    robot.runDiagnostic();
+    // robot.runDiagnostic();
+    // robot.GetValues();
+    robot.Calibrate();
   }
   else
   {
@@ -93,14 +97,16 @@ void loop()
     // robot.Start();
     // Serial.println(robot._adjustToggle);
     // robot.GetValues();
-    // robot.GetStringReadings();
+    // robot.GetLineValues();
+    robot.GetStringReadings();
   }
 
-  Serial.println(state);
+  // Serial.println(state);
   checkGlobalEvents();
   switch (state)
   {
   case IDLE:
+    robot.Stop();
     robot.Calibrate();
     break;
   case LOAD:
@@ -113,19 +119,25 @@ void loop()
     robot.MoveForward();
   case TO_L_2:
     robot.Follow();
+    robot.GetJunctionReadings();
     break;
   case PIVOT_L_2:
+    robot.GetJunctionReadings();
     robot.MoveCW(); // for red
     break;
   case TO_FORK_DOWN:
+    robot.GetJunctionReadings();
     robot.Follow();
   case PIVOT_FORK_DOWN:
+    robot.GetJunctionReadings();
     robot.MoveCCW();
     break;
   case TO_UNLOAD:
+    robot.GetJunctionReadings();
     robot.Follow();
     break;
   case PIVOT_UNLOAD:
+    robot.GetJunctionReadings();
     robot.MoveCW();
     break;
   case UNLOAD:
@@ -154,59 +166,34 @@ void checkGlobalEvents()
     state = PASS_LOAD_LINE;
     passLineTimer.reset();
   }
-  if (passLineTimer.check() && state == PASS_LOAD_LINE) {
+  if ((uint8_t) passLineTimer.check() && state == PASS_LOAD_LINE) {
     state = TO_L_2;
   }
-  if (robot.juncVals & 0 &&) { // for red
-  
+  if ((robot.juncVals & 1) == 0 && state == TO_L_2) { // for red so check for right
+    state = PIVOT_L_2;
   }
-
-
-
-
-
-  if (turn90Timer.check())
-  {
-    turn90 = true;
+  if (state == PIVOT_L_2 && (robot.juncVals & 3)) { // detects bofa
+    state = TO_FORK_DOWN;
   }
-  if (shortTimer.check())
-  {
-    shortT = true;
+  if (state == TO_FORK_DOWN && (robot.juncVals & 3)) {
+    state = PIVOT_FORK_DOWN;
   }
-  if (shorterTimer.check())
-  {
-    shorterT = true;
+  if (state == PIVOT_FORK_DOWN && (robot.juncVals ^ 0)) {
+    state = TO_UNLOAD;
   }
-  if (state == EXIT_OPP && turn90)
-  {
+  if (state == TO_UNLOAD && (robot.juncVals > 0)) { // detected a line
+    state = PIVOT_UNLOAD;
+    rotateTimer.reset();
+  }
+  if (state == PIVOT_UNLOAD && ((uint8_t) rotateTimer.check())) {
+    state = UNLOAD;
+    passLineTimer.reset();
+  }
+  if (state == UNLOAD && ((uint8_t) passLineTimer.check())) {
     state = EXIT_LOAD;
-    turn90Timer.reset();
-    turn90 = false;
   }
-  if (state == EXIT_LOAD && robot.TestJunction() && turn90)
-  {
-    state = TO_T;
-    shortTimer.reset();
-    shortT = false;
-  }
-  if (state == TO_T && shortT)
-  {
-    state = CROSS_OVER;
-    shortTimer.reset();
-    shortT = false;
-  }
-  if (state == CROSS_OVER && robot.TestJunction() && shortT)
-  {
-    state = PIVOT_T;
-    shorterTimer.reset();
-    shorterT = false;
-  }
-  if (state == PIVOT_T && shorterT)
-  {
-    state = TO_LOAD;
-  }
-  if (state == TO_LOAD && robot.TestJunction())
-  {
-    state = TO_FORK;
-  }
+  if (state == EXIT_LOAD && ((uint8_t) passLineTimer.check())) {
+    state = IDLE;
+  } // stop here for now
+
 }

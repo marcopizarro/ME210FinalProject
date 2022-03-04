@@ -45,6 +45,9 @@ void Robot::run(void)
     mVal = analogRead(_sensors.middleSensor);
     rVal = analogRead(_sensors.rightSensor);
 
+    lJVal = analogRead(_sensors.leftJunction);
+    rJVal = analogRead(_sensors.rightJunction);
+
     if (digitalRead(_controls.toggleBtn) == HIGH)
     {
         mode = 0;
@@ -236,7 +239,7 @@ void Robot::_button4()
 
 void Robot::GetReadings(void) // line sensor readings
 {
-    if ((lVal >= WThreshL))
+    if ((lVal <= WThreshL))
     {
         lineVals |= 4;
     }
@@ -244,12 +247,12 @@ void Robot::GetReadings(void) // line sensor readings
     {
         lineVals |= 2;
     }
-    if ((rVal >= WThreshR))
+    if ((rVal <= WThreshR))
     {
         lineVals |= 1;
     }
 
-    if ((lVal <= BThreshL))
+    if ((lVal >= BThreshL))
     {
         lineVals &= 3;
     }
@@ -257,7 +260,7 @@ void Robot::GetReadings(void) // line sensor readings
     {
         lineVals &= 5;
     }
-    if ((rVal <= BThreshR))
+    if ((rVal >= BThreshR))
     {
         lineVals &= 6;
     }
@@ -323,11 +326,11 @@ void Robot::GetJunctionReadings(void) {
 
     if ((lJVal <= BThreshLJ))
     {
-        juncVals &= 1;
+        juncVals &= 0;
     }
     if ((rJVal <= BThreshRJ))
     {
-        juncVals &= 2;
+        juncVals &= 1;
     }
 }
 
@@ -431,35 +434,35 @@ void Robot::StopMotor(Motor_t motor)
 
 void Robot::MoveForward(void)
 {
-    Serial.println("FORWARD");
+    // Serial.println("FORWARD");
     MoveMotorForward(LEFT);
     MoveMotorForward(RIGHT);
 }
 
 void Robot::MoveBackward(void)
 {
-    Serial.println("BACKWARD");
+    // Serial.println("BACKWARD");
     MoveMotorBackward(LEFT);
     MoveMotorBackward(RIGHT);
 }
 
 void Robot::Stop(void)
 {
-    Serial.println("STOP");
+    // Serial.println("STOP");
     StopMotor(LEFT);
     StopMotor(RIGHT);
 }
 
 void Robot::MoveCCW(void)
 {
-    Serial.println("CCW");
+    // Serial.println("CCW");
     MoveMotorForward(LEFT);
     MoveMotorBackward(RIGHT);
 }
 
 void Robot::MoveCW(void)
 {
-    Serial.println("CW");
+    // Serial.println("CW");
     MoveMotorBackward(LEFT);
     MoveMotorForward(RIGHT);
 }

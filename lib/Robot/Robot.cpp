@@ -367,7 +367,7 @@ bool Robot::TestBackLimitSwitch(void)
 bool Robot::TestJunction(void)
 {
     GetJunctionReadings();
-    if (lineVals == 0 || lineVals == 1 || lineVals == 6 || lineVals == 5) {
+    if (juncVals == 0 || juncVals == 1 || juncVals == 2) {
         return true;
     } else {
         return false;

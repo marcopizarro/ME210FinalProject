@@ -61,6 +61,8 @@ Sensors sensors = {
     22, // left
     21, // middle
     23, // right
+    0, // junction left
+    0, // junction right
 };
 
 const byte servoPin = 10;

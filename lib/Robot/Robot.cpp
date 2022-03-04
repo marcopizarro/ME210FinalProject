@@ -13,6 +13,9 @@ Robot::Robot(vexMotor leftMotor, vexMotor rightMotor, Controls controls, Sensors
     pinMode(_sensors.middleSensor, INPUT);
     pinMode(_sensors.rightSensor, INPUT);
 
+    pinMode(_sensors.leftJunction, INPUT);
+    pinMode(_sensors.rightJunction, INPUT);
+
     pinMode(_leftMotor.dir1, OUTPUT);
     pinMode(_leftMotor.dir2, OUTPUT);
     pinMode(_leftMotor.enablePin, OUTPUT);
@@ -121,6 +124,9 @@ void Robot::CalibrateBlack(void)
     _BlackL = analogRead(_sensors.leftSensor);
     _BlackM = analogRead(_sensors.middleSensor);
     _BlackR = analogRead(_sensors.rightSensor);
+
+    _BlackLJ = analogRead(_sensors.leftJunction);
+    _BlackRJ = analogRead(_sensors.rightJunction);
 }
 
 void Robot::CalibrateWhite(void)
@@ -129,6 +135,9 @@ void Robot::CalibrateWhite(void)
     _WhiteL = analogRead(_sensors.leftSensor);
     _WhiteM = analogRead(_sensors.middleSensor);
     _WhiteR = analogRead(_sensors.rightSensor);
+
+    _WhiteLJ = analogRead(_sensors.leftJunction);
+    _WhiteRJ = analogRead(_sensors.rightJunction);
 }
 
 void Robot::_setThresholds(void)
@@ -145,6 +154,15 @@ void Robot::_setThresholds(void)
     BThreshL = (_BlackL + _ThreshL) / 2;
     BThreshM = (_BlackM + _ThreshM) / 2;
     BThreshR = (_BlackR + _ThreshR) / 2;
+
+    _ThreshLJ = (_BlackL + _WhiteL) / 2;
+    _ThreshRJ = (_BlackR + _WhiteR) / 2;
+
+    WThreshLJ = (_WhiteL + _ThreshL) / 2;
+    WThreshRJ = (_WhiteR + _ThreshR) / 2;
+
+    BThreshLJ = (_BlackL + _ThreshL) / 2;
+    BThreshRJ = (_BlackR + _ThreshR) / 2;
 }
 
 void Robot::_runAdjustTimer(void)
@@ -216,28 +234,28 @@ void Robot::GetReadings(void)
 {
     if ((lVal >= WThreshL))
     {
-        vals |= 4;
+        lineVals |= 4;
     }
     if ((mVal >= WThreshM))
     {
-        vals |= 2;
+        lineVals |= 2;
     }
     if ((rVal >= WThreshR))
     {
-        vals |= 1;
+        lineVals |= 1;
     }
 
     if ((lVal <= BThreshL))
     {
-        vals &= 3;
+        lineVals &= 3;
     }
     if ((mVal <= BThreshM))
     {
-        vals &= 5;
+        lineVals &= 5;
     }
     if ((rVal <= BThreshR))
     {
-        vals &= 6;
+        lineVals &= 6;
     }
 }
 
@@ -245,31 +263,31 @@ void Robot::GetStringReadings(void)
 {
     GetReadings();
 
-    if (vals == 7)
+    if (lineVals == 7)
     {
         Serial.println("111");
     }
-    else if (vals == 6)
+    else if (lineVals == 6)
     {
         Serial.println("110");
     }
-    else if (vals == 5)
+    else if (lineVals == 5)
     {
         Serial.println("101");
     }
-    else if (vals == 4)
+    else if (lineVals == 4)
     {
         Serial.println("100");
     }
-    else if (vals == 3)
+    else if (lineVals == 3)
     {
         Serial.println("011");
     }
-    else if (vals == 2)
+    else if (lineVals == 2)
     {
         Serial.println("010");
     }
-    else if (vals == 1)
+    else if (lineVals == 1)
     {
         Serial.println("001");
     }
@@ -283,6 +301,15 @@ void Robot::GetValues(void)
 {
     Serial.printf("%d, %d, %d\n", lVal, mVal, rVal);
 }
+
+void GetJunctionReadings(void) {
+
+}
+
+void GetJunctionValues(void) {
+
+}
+
 
 void Robot::LowerServo(void)
 {
@@ -314,13 +341,14 @@ bool Robot::TestBackLimitSwitch(void)
 
 bool Robot::TestJunction(void)
 {
-    GetReadings();
-    if (vals == 0 || vals == 1 || vals == 6 || vals == 5) {
+    GetJunctionReadings();
+    if (lineVals == 0 || lineVals == 1 || lineVals == 6 || lineVals == 5) {
         return true;
     } else {
         return false;
     }
 }
+
 
 void Robot::MoveMotorForward(Motor_t motor)
 {
@@ -488,7 +516,7 @@ void Robot::Follow(void)
 {
     GetReadings();
 
-    if (vals == 7)
+    if (lineVals == 7)
     {
         Serial.println("NO MAN'S LAND");
         // Serial.println("111");
@@ -496,7 +524,7 @@ void Robot::Follow(void)
         Move();
         // Stop();
     }
-    else if (vals == 6)
+    else if (lineVals == 6)
     {
         SetSpeed(SPEED);
         // Serial.println("110");
@@ -512,7 +540,7 @@ void Robot::Follow(void)
         // }
     }
 
-    else if (vals == 3)
+    else if (lineVals == 3)
     {
         SetSpeed(SPEED);
         // Serial.println("011");
@@ -528,7 +556,7 @@ void Robot::Follow(void)
         // }
     }
 
-    else if (vals == 1)
+    else if (lineVals == 1)
     {
         // Serial.println("001");
         SetSpeed(SPEED);
@@ -544,7 +572,7 @@ void Robot::Follow(void)
         //     Move();
         // }
     }
-    else if (vals == 4)
+    else if (lineVals == 4)
     {
         // Serial.println("100");
         SetSpeed(SPEED);
@@ -560,14 +588,15 @@ void Robot::Follow(void)
         //     Move();
         // }
     }
-    else if (vals == 2)
+    else if (lineVals == 2)
     {
         // SetSpeed(MAX_SPEED);
         Serial.println("JUNCTION");
+        Move();
         // Serial.println("010");
         // Stop();
     }
-    else if (vals == 5)
+    else if (lineVals == 5)
     {
         // Serial.println("101");
         SetSpeed(SPEED);
@@ -577,6 +606,7 @@ void Robot::Follow(void)
     {
         // Serial.println("000");
         Serial.println("LINE");
+        Move();
         // SetSpeed(MAX_SPEED);
         // Stop();
     }

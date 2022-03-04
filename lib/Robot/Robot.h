@@ -36,6 +36,8 @@ struct sensors
     byte leftSensor = 0;
     byte middleSensor = 0;
     byte rightSensor = 0;
+    byte leftJunction = 0;
+    byte rightJunction = 0;
 };
 typedef struct sensors Sensors;
 
@@ -78,9 +80,11 @@ class Robot {
         void SetSpeed(int newSpeed);
 
         void Start(void);
+        void GetJunctionReadings(void);
         void GetReadings(void);
         void GetStringReadings(void);
         void GetValues(void);
+        void GetJunctionValues(void);
 
         // servo
         Servo scooper;
@@ -100,11 +104,18 @@ class Robot {
         int BThreshM;
         int BThreshR;
 
+        // junction thresholds
+        int WThreshLJ;
+        int WThreshRJ;
+
+        int BThreshLJ;
+        int BThreshRJ;
+
         int lVal;
         int mVal;
         int rVal;
 
-        byte vals = 0;
+        byte lineVals = 0;
         bool _adjustToggle = true;
         bool calibrated = false;
 
@@ -125,7 +136,8 @@ class Robot {
 
         Metro _adjustTimer = Metro(300);
         Metro _moveTimer = Metro(100);
-
+        
+        // line sensors b/w values
         int _BlackL = 100;
         int _BlackM = 100;
         int _BlackR = 100;
@@ -137,6 +149,16 @@ class Robot {
         int _ThreshL;
         int _ThreshM;
         int _ThreshR;
+
+        // junction b/w values
+        int _BlackLJ = 100;
+        int _BlackRJ = 100;
+
+        int _WhiteLJ = 800;
+        int _WhiteRJ = 800;
+
+        int _ThreshLJ;
+        int _ThreshRJ;
 
         int _slowSpeed = 40;
         int _fastSpeed = 100;

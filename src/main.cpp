@@ -12,37 +12,41 @@ Metro passLineTimer2 = Metro(500);
 Metro rotateTimer = Metro(60);
 Metro fullturn = Metro(2000);
 
-
 bool turn90 = false;
 bool shortT = false;
 bool shorterT = false;
 
 typedef enum
 {
-  IDLE,
-  LOAD,
-  EXIT_LOAD,
-  PASS_LOAD_LINE,
-  TO_L_2,
-  PASS_L_2,
-  PIVOT_L_2, // spin
-  TO_FORK_DOWN,
-  PASS_FORK_DOWN,
-  PIVOT_FORK_DOWN, // spin
-  TO_UNLOAD,
-    UNLOAD_BACK,
-  PIVOT_UNLOAD, // spin
-  UNLOAD,
-  EXIT_UNLOAD, // spin or what not
-  TO_FORK_UP,
-  PIVOT_FORK_UP, // spin
-  TO_T,
-  PIVOT_T, // spin
-  TO_LOAD, // to idle
-  NADA,
-  TURN_AROUND,
-  BACKINTOIT,
-  GOALIL,
+    IDLE,
+    LOAD,
+    EXIT_LOAD,
+    PASS_LOAD_LINE,
+    // ALIGN_TO_L2,
+    TO_L_2,
+    PASS_L_2,
+    PIVOT_L_2, // spin
+    TO_FORK_DOWN_LINE,
+    TO_FORK_DOWN_SLOW,
+    REALIGN_FORK_DOWN,
+    TO_FORK_DOWN,
+    PIVOT_FORK_DOWN, // spin
+    TO_UNLOAD,
+    PIVOT_UNLOAD_TO_WHITE,
+    PIVOT_UNLOAD, // spin
+    CHECK_UNLOAD,
+    REALIGN_UNLOAD,
+    UNLOAD,
+    EXIT_UNLOAD, // spin or what not
+    TO_FORK_UP,
+    PIVOT_FORK_UP, // spin
+    TO_T,
+    PIVOT_T, // spin
+    TO_LOAD, // to idle
+    NADA,
+    TURN_AROUND,
+    BACKINTOIT,
+    GOALIL,
 } States_t;
 
 States_t state;
@@ -79,7 +83,7 @@ Sensors sensors = {
 
 const byte servoPin = 10;
 
-bool test = true;
+bool test = false;
 
 Robot robot = Robot(leftMotor, rightMotor, controls, sensors, servoPin);
 
@@ -87,206 +91,212 @@ void checkGlobalEvents(void);
 
 void setup()
 {
-  pinMode(14, INPUT);
-  state = IDLE;
-  passLineTimer.reset();
-  passLineTimer2.reset();
-  fullturn.reset();
-  // robot.RaiseServo();
+    pinMode(14, INPUT);
+    state = IDLE;
+    passLineTimer.reset();
+    passLineTimer2.reset();
+    fullturn.reset();
+    robot.LowerServo();
 }
 int count = 0;
 void loop()
 {
-  robot.run();
-  
+    robot.run();
 
-  // if (!robot.calibrated)
-  // {
-  //   // robot.runDiagnostic();
-  //   // robot.GetValues();
-  //   robot.Calibrate();
-  // }
-  // else
-  // {
-  //   robot.run();
-  //   // robot.Start();
-  //   // Serial.println(robot._adjustToggle);
-  //   // robot.GetValues();
-  //   // robot.GetLineValues();
-  //   // robot.GetStringReadings();
-  // }
-  Serial.println(state);
-  checkGlobalEvents();
-  switch (state)
-  {
-  case NADA:
-    robot.Stop();
-    robot.GetStringJReadings();
-    break;
-  case IDLE:
-    robot.Stop();
-    robot.Calibrate();
-    break;
-  case LOAD:
-    robot.MoveBackward();
-    break;
-  case EXIT_LOAD:
-    robot.MoveForward();
-    break;
-  case PASS_LOAD_LINE:
-    robot.MoveForward();
-    break;
-  case TO_L_2:
-    robot.Follow();
-    robot.GetJunctionReadings();
-    Serial.println(robot.juncVals);
-    robot.GetStringJReadings();
-    break;
-  case PASS_L_2:
-    robot.MoveForward();
+    if (test)
+    {
+      // robot.runDiagnostic();
+      // robot.GetValues();
+    robot.runDiagnostic();
+    }
+    // else
+    // {
+    //   robot.run();
+    //   // robot.Start();
+    //   // Serial.println(robot._adjustToggle);
+    //   // robot.GetValues();
+    //   // robot.GetLineValues();
+    //   // robot.GetStringReadings();
+    // }
     Serial.println(state);
-    break;
-  case PIVOT_L_2:
-    robot.GetReadings();
-    robot.GetJunctionReadings();
-    robot.MoveCW(); // for red
-    break;
-  case TO_FORK_DOWN:
-    robot.GetReadings();
-    robot.GetJunctionReadings();
-    robot.Follow();
-    break;
-  case PASS_FORK_DOWN:
-    robot.GetReadings();
-    robot.GetJunctionReadings();
-    robot.MoveForward();
-    break;
-  case PIVOT_FORK_DOWN:
-    robot.GetReadings();
-    robot.GetJunctionReadings();
-    robot.MoveCCW();
-    break;
-  case TO_UNLOAD:
-    robot.GetJunctionReadings();
-    robot.Follow();
-    break;
-  case UNLOAD_BACK:
-    robot.GetJunctionReadings();
-    robot.MoveBackward();
-    break;
-  case PIVOT_UNLOAD:
-    robot.GetJunctionReadings();
-    robot.MoveCW();
-    break;
-  case UNLOAD:
-    robot.Stop();
-    robot.LowerServo();
-    break;
-  case TURN_AROUND:
-  // robot.RaiseServo();
-    // robot.SetSpeed(50);
-    robot.MoveCCW();
-    break;
-  case BACKINTOIT:
-    robot.MoveBackward();
-    break;
-  case GOALIL:
-    robot.Follow();
-    break;
-  }
+    checkGlobalEvents();
+    switch (state)
+    {
+    case NADA:
+        robot.Stop();
+        robot.GetStringJReadings();
+        break;
+    case IDLE:
+        robot.Stop();
+        robot.Calibrate();
+        break;
+    case LOAD:
+        robot.SetMotorSpeed(LEFT, SPEED);
+        robot.SetMotorSpeed(RIGHT, SPEED);
+        robot.MoveBackward();
+        // robot.MoveMotorBackward(RIGHT);
+        // robot.MoveMotorBackward(LEFT);
+        break;
+    case EXIT_LOAD:
+        robot.SetMotorSpeed(LEFT, SPEED);
+        robot.SetMotorSpeed(RIGHT, SPEED);
+        robot.MoveForward();
+        // robot.MoveMotorForward(RIGHT);
+        // robot.MoveMotorForward(RIGHT);
+
+        break;
+    case PASS_LOAD_LINE:
+        robot.SetSpeed(SPEED);
+        robot.MoveForward();
+        break;
+    case TO_L_2:
+        robot.Follow();
+        robot.GetJunctionReadings();
+        Serial.println(robot.juncVals);
+        robot.GetStringJReadings();
+        break;
+    case PASS_L_2:
+        robot.MoveForward();
+        Serial.println(state);
+        break;
+    case PIVOT_L_2:
+        robot.GetReadings();
+        robot.GetJunctionReadings();
+        robot.MoveCW(); // for red
+        break;
+    case TO_FORK_DOWN_LINE:
+        robot.SetSpeed(SLOW_SPEED);
+        robot.GetReadings();
+        robot.GetJunctionReadings();
+        robot.MoveForward();
+        robot.GetStringReadings();
+        break;
+    case TO_FORK_DOWN_SLOW:
+        robot.GetReadings();
+        robot.GetJunctionReadings();
+        robot.Follow();
+        break;
+    case TO_FORK_DOWN:
+        robot.SetSpeed(SPEED);
+        robot.GetReadings();
+        robot.GetJunctionReadings();
+        robot.Follow();
+        break;
+    case REALIGN_FORK_DOWN:
+        robot.GetReadings();
+        robot.GetJunctionReadings();
+        robot.MoveCW();
+        break;
+    case PIVOT_FORK_DOWN:
+        robot.GetReadings();
+        robot.GetJunctionReadings();
+        robot.MoveCCW();
+        break;
+    case TO_UNLOAD:
+        robot.GetJunctionReadings();
+        robot.Follow();
+        break;
+    case PIVOT_UNLOAD_TO_WHITE:
+        robot.GetReadings();
+        robot.GetJunctionReadings();
+        robot.MoveCCW();
+        break;
+    case PIVOT_UNLOAD:
+        robot.SetSpeed(SLOW_SPEED + 7);
+        robot.GetJunctionReadings();
+        robot.GetReadings();
+        robot.MoveCCW();
+        break;
+    case CHECK_UNLOAD:
+        robot.SetSpeed(MAX_SPEED);
+        robot.Stop();
+        break;
+    case REALIGN_UNLOAD:
+        robot.SetSpeed(SLOW_SPEED + 7);
+        robot.MoveCW();
+        break;
+    case UNLOAD:
+        robot.Stop();
+        robot.LowerServo();
+        break;
+    }
 }
 
 void checkGlobalEvents()
 {
-  if (robot.calibrated && state == IDLE)
-  {
-    state = LOAD;
-    // Serial.println("CLAIBRATED");
-    robot.calibrated = false;
-  }
-  if (robot.TestLimitSwitch() && state == LOAD)
-  {
-    // Serial.println("HIT SWITCH");
-    state = EXIT_LOAD;
-    robot.calibrated = false;
-    robot.RaiseServo();
-    // skipLine.reset();
-  }
-  if (robot.TestJunction() && state == EXIT_LOAD)
-  {
-    robot.Stop();
-    state = PASS_LOAD_LINE;
-    passLineTimer.reset();
-  }
-  if ((uint8_t)passLineTimer.check() && state == PASS_LOAD_LINE)
-  {
-    state = TO_L_2;
-  }
-  if (robot.juncVals == 2 && state == TO_L_2)
-  { // for red so check for right
-    state = PASS_L_2;
-    passLineTimer2.reset();
-  }
-  if (state == PASS_L_2 && (uint8_t)passLineTimer2.check())
-  {
-    state = PIVOT_L_2;
-    passLineTimer2.reset();
-  }
-  if (state == PIVOT_L_2 && (robot.juncVals > 0) && (robot.lineVals < 7 ) && (uint8_t)passLineTimer2.check())
-  { // detects bofa
-    state = TO_FORK_DOWN;
-    passLineTimer2.reset();
-  }
-  if (state == TO_FORK_DOWN && (robot.juncVals < 3) && (uint8_t)passLineTimer2.check())
-  {
-    state = PASS_FORK_DOWN;
-    passLineTimer2.reset();
-  }
-  if (state == PASS_FORK_DOWN && (uint8_t)passLineTimer2.check())
-  {
-    state = PIVOT_FORK_DOWN;
-    rotateTimer.reset();
-  }
-  if (state == PIVOT_FORK_DOWN && (robot.juncVals > 0) && (robot.lineVals < 7) && (uint8_t)rotateTimer.check())
-  {
-    state = GOALIL;
-    // state = TURN_AROUND;
-    passLineTimer2.reset();
-  }
-  if(state == GOALIL && (uint8_t)passLineTimer2.check()){
-    state = TURN_AROUND;
-    passLineTimer2.reset();
-    robot.Stop();
-  }
-    if(state == TURN_AROUND && (robot.WThreshM > robot.BThreshM) && (uint8_t)passLineTimer2.check())
-  {
-    state = BACKINTOIT;
-  }
-  // if(state == TURN_AROUND && (uint8_t)fullturn.check()) //&& (robot.WThreshM > robot.BThreshM)
-  // {
-  //   state = NADA;
-  // }
-
-
-  // if (state == TO_UNLOAD && (robot.juncVals < 3) && (uint8_t)passLineTimer.check()) { // detected a line
-  //   state = NADA;
-  //   // state = UNLOAD_BACK;
-  //   // passLineTimer2.reset();
-  // }
-  // if (state == UNLOAD_BACK && (uint8_t) passLineTimer2.check()) {
-  //   state = PIVOT_UNLOAD;
-  //   passLineTimer2.reset();
-  // }
-  // if (state == PIVOT_UNLOAD && ((uint8_t) passLineTimer2.check())) {
-  //   state = UNLOAD;
-  //   passLineTimer.reset();
-  // }
-  
-  // if (state == UNLOAD && ((uint8_t) passLineTimer.check())) {
-  //   state = NADA;
-  //   passLineTimer.reset();
-  // }
-  // if (state == EXIT_LOAD && ((uint8_t) passLineTimer.check())) {
-  //   state = NADA;
-  // } // stop here for now
+    if (robot.calibrated && state == IDLE)
+    {
+        state = LOAD;
+        // Serial.println("CLAIBRATED");
+        robot.calibrated = false;
+    }
+    if (robot.TestLimitSwitch() && state == LOAD)
+    {
+        // Serial.println("HIT SWITCH");
+        state = EXIT_LOAD;
+        robot.calibrated = false;
+        robot.RaiseServo();
+        // skipLine.reset();
+    }
+    if (robot.TestJunction() && state == EXIT_LOAD)
+    {
+        robot.Stop();
+        state = PASS_LOAD_LINE;
+    }
+    if (!robot.TestJunction() && state == PASS_LOAD_LINE)
+    {
+        state = TO_L_2;
+    }
+    if (robot.juncVals == 2 && state == TO_L_2)
+    { // for red so check for right
+        // state = PASS_L_2;
+        state = PIVOT_L_2;
+    }
+    if (state == PIVOT_L_2 && robot.juncVals == 1) {
+        state = TO_FORK_DOWN_LINE;
+    }
+    if (state == TO_FORK_DOWN_LINE && (robot.lineVals == 4 || robot.lineVals == 6 || robot.lineVals == 5 || robot.lineVals == 1)) {
+        state = TO_FORK_DOWN_SLOW;
+    }
+    if (state == TO_FORK_DOWN_SLOW && (robot.lineVals == 5)) {
+        state = TO_FORK_DOWN;
+    }
+    if ((state == TO_FORK_DOWN_SLOW || state == TO_FORK_DOWN) && (robot.juncVals == 2)) {
+        state = REALIGN_FORK_DOWN;
+    }
+    if (state == REALIGN_FORK_DOWN && robot.lineVals == 1) {
+        state = TO_FORK_DOWN_SLOW;
+    }
+    if (state == REALIGN_FORK_DOWN && robot.lineVals == 0) {
+        state = PIVOT_FORK_DOWN;
+    }
+    if (state == TO_FORK_DOWN && (robot.juncVals == 0)) {
+        state = PIVOT_FORK_DOWN;
+    }
+    if (state == PIVOT_FORK_DOWN && robot.juncVals == 3 && (robot.lineVals == 1 || robot.lineVals == 5)) {
+        state = TO_UNLOAD;
+    }
+    if (state == TO_UNLOAD && robot.juncVals < 3) {
+        state = PIVOT_UNLOAD_TO_WHITE;
+    }
+    if (state == PIVOT_UNLOAD_TO_WHITE && robot.juncVals == 3 && robot.lineVals == 7) {
+        state = PIVOT_UNLOAD;
+    }
+    if (state == PIVOT_UNLOAD && robot.juncVals == 0) {
+        state = CHECK_UNLOAD;
+    }
+    if (state == CHECK_UNLOAD && robot.juncVals >= 1) {
+        state = REALIGN_UNLOAD;
+    }
+    if (state == CHECK_UNLOAD && robot.juncVals == 0) {
+        state = UNLOAD;
+        passLineTimer.reset();
+    }
+    if (state == REALIGN_UNLOAD && robot.juncVals == 0) {
+        state = UNLOAD;
+        passLineTimer.reset();
+    }
+    if (state == UNLOAD && ((uint8_t) passLineTimer.check())) {
+        state = NADA;
+    } // stop here for now
 }
